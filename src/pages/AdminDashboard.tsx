@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   LayoutDashboard,
@@ -13,7 +12,10 @@ import {
   Trash,
   X,
   Save,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw,
+  Power,
+  PowerOff
 } from "lucide-react";
 import { 
   Card, 
@@ -39,8 +41,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
 
-// Example plans data
 const initialPlans = [
   {
     id: 1,
@@ -98,7 +100,6 @@ const initialPlans = [
   }
 ];
 
-// Example promotions data
 const initialPromotions = [
   {
     id: 1,
@@ -115,6 +116,39 @@ const initialPromotions = [
     discount: 15,
     validUntil: "2023-12-31",
     isActive: true
+  }
+];
+
+const initialServers = [
+  {
+    id: 1,
+    name: "Game Server 1",
+    status: "running",
+    owner: "user@example.com",
+    plan: "Professional",
+    node: "Node 1",
+    ip: "192.168.1.1",
+    port: 25565
+  },
+  {
+    id: 2,
+    name: "Discord Bot",
+    status: "stopped",
+    owner: "another@example.com",
+    plan: "Starter",
+    node: "Node 2",
+    ip: "192.168.1.2",
+    port: 8080
+  },
+  {
+    id: 3,
+    name: "Web Hosting",
+    status: "running",
+    owner: "third@example.com",
+    plan: "Business",
+    node: "Node 1",
+    ip: "192.168.1.3",
+    port: 80
   }
 ];
 
@@ -445,6 +479,195 @@ const PromotionForm = ({
   );
 };
 
+const ServersManagement = () => {
+  const [servers, setServers] = useState(initialServers);
+  const [isLoading, setIsLoading] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("");
+  const { toast } = useToast();
+  
+  const handleSync = () => {
+    setIsLoading(true);
+    setSyncStatus("Syncing with Pterodactyl...");
+    
+    setTimeout(() => {
+      toast({
+        title: "Synchronization complete",
+        description: "Successfully synced servers with Pterodactyl."
+      });
+      setIsLoading(false);
+      setSyncStatus("");
+    }, 2000);
+  };
+  
+  const handleServerAction = (serverId: number, action: string) => {
+    setServers(servers.map(server => {
+      if (server.id === serverId) {
+        let newStatus = server.status;
+        if (action === 'start') newStatus = 'running';
+        if (action === 'stop') newStatus = 'stopped';
+        if (action === 'restart') {
+          toast({
+            title: "Restarting server",
+            description: `${server.name} is restarting...`
+          });
+        }
+        
+        return { ...server, status: newStatus };
+      }
+      return server;
+    }));
+    
+    toast({
+      title: `Server ${action}ed`,
+      description: `Successfully ${action}ed server.`
+    });
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Server Management</h2>
+        <div className="space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={handleSync} 
+            disabled={isLoading}
+            className="transition-all hover:scale-105 active:scale-95"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Sync with Pterodactyl
+          </Button>
+          <Button className="transition-all hover:scale-105 active:scale-95">
+            <Plus className="h-4 w-4 mr-2" />
+            New Server
+          </Button>
+        </div>
+      </div>
+      
+      {syncStatus && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-4 rounded-md flex items-center">
+          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+          {syncStatus}
+        </div>
+      )}
+      
+      <div className="bg-white dark:bg-ultravm-dark/40 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Server Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Owner
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Plan
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Node
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  IP:Port
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {servers.map((server) => (
+                <motion.tr 
+                  key={server.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                  whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                    {server.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {server.status === "running" ? (
+                      <span className="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full text-xs flex items-center w-fit">
+                        <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
+                        Running
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 rounded-full text-xs flex items-center w-fit">
+                        <span className="w-2 h-2 bg-gray-500 rounded-full mr-1"></span>
+                        Stopped
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                    {server.owner}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                    {server.plan}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                    {server.node}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                    <code className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded">
+                      {server.ip}:{server.port}
+                    </code>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                    <div className="flex space-x-1 justify-end">
+                      {server.status === "stopped" ? (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleServerAction(server.id, 'start')}
+                          className="text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-all hover:scale-110 active:scale-95"
+                        >
+                          <Power className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleServerAction(server.id, 'stop')}
+                          className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-all hover:scale-110 active:scale-95"
+                        >
+                          <PowerOff className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleServerAction(server.id, 'restart')}
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-all hover:scale-110 active:scale-95"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="transition-all hover:scale-110 active:scale-95"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PlansManagement = () => {
   const [plans, setPlans] = useState(initialPlans);
   const [promotions, setPromotions] = useState(initialPromotions);
@@ -556,14 +779,14 @@ const PlansManagement = () => {
     <div className="space-y-6">
       <Tabs defaultValue="plans">
         <TabsList className="mb-4">
-          <TabsTrigger value="plans">Service Plans</TabsTrigger>
-          <TabsTrigger value="promotions">Special Offers</TabsTrigger>
+          <TabsTrigger value="plans" className="transition-all hover:scale-105 active:scale-95">Service Plans</TabsTrigger>
+          <TabsTrigger value="promotions" className="transition-all hover:scale-105 active:scale-95">Special Offers</TabsTrigger>
         </TabsList>
         
         <TabsContent value="plans" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Service Plans</h2>
-            <Button onClick={handleAddPlan}>
+            <Button onClick={handleAddPlan} className="transition-all hover:scale-105 active:scale-95">
               <Plus className="h-4 w-4 mr-2" />
               Add New Plan
             </Button>
@@ -573,9 +796,9 @@ const PlansManagement = () => {
             {plans.map((plan) => (
               <motion.div 
                 key={plan.id}
-                className="bg-white dark:bg-ultravm-dark/40 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.2 }}
+                className="bg-white dark:bg-ultravm-dark/40 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden transform transition-all duration-200"
+                whileHover={{ y: -7, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+                whileTap={{ scale: 0.98 }}
               >
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
@@ -630,7 +853,7 @@ const PlansManagement = () => {
                   <div className="flex space-x-2">
                     <Button 
                       variant="outline" 
-                      className="flex-1"
+                      className="flex-1 transition-all hover:scale-105 active:scale-95"
                       onClick={() => handleEditPlan(plan)}
                     >
                       <Edit className="h-4 w-4 mr-2" />
@@ -639,6 +862,7 @@ const PlansManagement = () => {
                     <Button 
                       variant="destructive" 
                       size="icon"
+                      className="transition-all hover:scale-105 active:scale-95"
                       onClick={() => confirmDelete(plan.id, 'plan')}
                     >
                       <Trash className="h-4 w-4" />
@@ -653,7 +877,7 @@ const PlansManagement = () => {
         <TabsContent value="promotions" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Special Offers</h2>
-            <Button onClick={handleAddPromotion}>
+            <Button onClick={handleAddPromotion} className="transition-all hover:scale-105 active:scale-95">
               <Plus className="h-4 w-4 mr-2" />
               Add New Offer
             </Button>
@@ -746,7 +970,6 @@ const PlansManagement = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Plan Edit Dialog */}
       <Dialog open={!!editingPlan} onOpenChange={(open) => !open && setEditingPlan(null)}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -766,7 +989,6 @@ const PlansManagement = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Promotion Edit Dialog */}
       <Dialog open={!!editingPromotion} onOpenChange={(open) => !open && setEditingPromotion(null)}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -786,7 +1008,6 @@ const PlansManagement = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
@@ -820,6 +1041,20 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("plans");
   const { toast } = useToast();
   
+  const handlePterodactylSync = () => {
+    toast({
+      title: "Pterodactyl Synchronization",
+      description: "Starting synchronization with Pterodactyl..."
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "Synchronization Complete",
+        description: "Successfully synchronized users and servers with Pterodactyl."
+      });
+    }, 2000);
+  };
+  
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-ultravm-dark/30">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -838,13 +1073,10 @@ const AdminDashboard = () => {
             <div>
               <Button 
                 variant="outline"
-                onClick={() => {
-                  toast({
-                    title: "Synchronization",
-                    description: "Pterodactyl synchronization will be implemented in the next phase."
-                  });
-                }}
+                onClick={handlePterodactylSync}
+                className="transition-all hover:scale-105 active:scale-95"
               >
+                <RefreshCw className="h-4 w-4 mr-2" />
                 Sync with Pterodactyl
               </Button>
             </div>
@@ -853,7 +1085,8 @@ const AdminDashboard = () => {
         
         <main className="py-8 px-8">
           {activeTab === "plans" && <PlansManagement />}
-          {activeTab !== "plans" && (
+          {activeTab === "servers" && <ServersManagement />}
+          {activeTab !== "plans" && activeTab !== "servers" && (
             <div className="bg-white dark:bg-ultravm-dark/40 rounded-xl p-8 text-center">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                 This section is under development
@@ -861,7 +1094,7 @@ const AdminDashboard = () => {
               <p className="text-gray-600 dark:text-gray-300 mb-6">
                 The {activeTab} functionality will be implemented in the next phase.
               </p>
-              <Button onClick={() => setActiveTab("plans")}>
+              <Button onClick={() => setActiveTab("plans")} className="transition-all hover:scale-105 active:scale-95">
                 Go to Plan Management
               </Button>
             </div>

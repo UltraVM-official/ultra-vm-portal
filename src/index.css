@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -93,6 +92,18 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  button {
+    @apply transition-all duration-200;
+  }
+  
+  button:not([disabled]):hover {
+    @apply transform scale-105;
+  }
+  
+  button:not([disabled]):active {
+    @apply transform scale-95;
+  }
 }
 
 @layer components {
@@ -108,7 +119,6 @@
     background: linear-gradient(135deg, rgba(155, 135, 245, 0.1) 0%, rgba(155, 135, 245, 0.2) 100%);
   }
 
-  /* Animated background */
   .animated-bg {
     background: linear-gradient(to right, #9b87f5, #1EAEDB);
     background-size: 400% 400%;
@@ -189,6 +199,83 @@
     width: 100%;
     left: 0;
   }
+
+  .interactive-element {
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  .interactive-element:hover {
+    @apply transform scale-105 shadow-lg;
+  }
+  
+  .interactive-element:active {
+    @apply transform scale-95;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .card-hover:hover {
+    @apply transform -translate-y-2 shadow-xl;
+  }
+  
+  .btn-pop {
+    @apply relative overflow-hidden transition-all duration-200;
+  }
+  
+  .btn-pop::after {
+    @apply content-[''] absolute top-0 left-0 w-full h-full bg-white opacity-0 transition-opacity duration-300;
+  }
+  
+  .btn-pop:hover {
+    @apply transform scale-105 shadow-md;
+  }
+  
+  .btn-pop:active {
+    @apply transform scale-95;
+  }
+  
+  .btn-pop:hover::after {
+    @apply opacity-10;
+  }
+  
+  .input-focus-effect {
+    @apply transition-all duration-200;
+  }
+  
+  .input-focus-effect:focus {
+    @apply transform scale-[1.02] shadow-md;
+  }
+  
+  .card-pop {
+    @apply transition-all duration-300;
+  }
+  
+  .card-pop:hover {
+    @apply transform scale-[1.02] shadow-lg;
+  }
+  
+  .ripple {
+    @apply relative overflow-hidden;
+  }
+  
+  .ripple::after {
+    @apply content-[''] absolute block rounded-full scale-0 opacity-50;
+    background-color: currentColor;
+    padding: 100%;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0.5s, opacity 0.8s;
+  }
+  
+  .ripple:active::after {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+    transition: 0s;
+  }
 }
 
 @keyframes gradientBG {
@@ -230,6 +317,18 @@
   }
 }
 
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @layer utilities {
   .animate-float {
     animation: float 3s ease-in-out infinite;
@@ -237,5 +336,29 @@
 
   .animate-glow {
     animation: glow 3s ease-in-out infinite;
+  }
+
+  .animate-pop {
+    animation: pop 0.3s ease-in-out;
+  }
+  
+  .hover-pop:hover {
+    animation: pop 0.3s ease-in-out;
+  }
+  
+  .hover-shadow {
+    @apply transition-shadow duration-300;
+  }
+  
+  .hover-shadow:hover {
+    @apply shadow-lg;
+  }
+  
+  .active-scale {
+    @apply transition-transform duration-150;
+  }
+  
+  .active-scale:active {
+    @apply scale-95;
   }
 }
