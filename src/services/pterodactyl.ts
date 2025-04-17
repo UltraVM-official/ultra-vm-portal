@@ -41,6 +41,8 @@ export async function syncUserToPterodactyl(email: string, password: string, fir
         .from('user_profiles')
         .update({
           pterodactyl_id: result.pterodactylId,
+          first_name: firstName,
+          last_name: lastName,
           last_sync: new Date().toISOString()
         })
         .eq('id', data.session.user.id);
@@ -91,6 +93,24 @@ export async function triggerFullSync() {
     return result;
   } catch (error) {
     console.error('Error triggering sync:', error);
+    throw error;
+  }
+}
+
+// Function to check if a user exists in Pterodactyl by email
+export async function checkPterodactylUser(email: string) {
+  try {
+    const response = await fetch('/api/check-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email })
+    });
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error checking Pterodactyl user:', error);
     throw error;
   }
 }

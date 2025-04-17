@@ -218,6 +218,27 @@ app.post('/api/register', async (req: Request, res: Response) => {
     
     console.log(`Creating user in Pterodactyl: ${email}`);
     
+    // Check if the user already exists in Pterodactyl
+    try {
+      // Try to find user by email using filter
+      const { data: usersResponse } = await pteroApi.get('/users', {
+        params: { filter: { email } }
+      });
+      
+      // If user exists, return their ID
+      if (usersResponse.data && usersResponse.data.length > 0) {
+        const existingUser = usersResponse.data[0];
+        return res.json({ 
+          success: true, 
+          pterodactylId: existingUser.attributes.id,
+          message: 'User already exists in Pterodactyl, using existing account'
+        });
+      }
+    } catch (error) {
+      // If there's an error, continue to create a new user
+      console.log('Error checking for existing user, proceeding to create:', error.message);
+    }
+    
     // Create user in Pterodactyl
     const { data: pteroUser } = await pteroApi.post('/users', {
       email,
@@ -246,6 +267,41 @@ app.post('/api/register', async (req: Request, res: Response) => {
     console.error('Registration error:', error.response?.data || error.message);
     res.status(500).json({ 
       error: 'Registration failed',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+// Check if a user exists in Pterodactyl by email
+app.post('/api/check-user', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    // Try to find user by email using filter
+    const { data: usersResponse } = await pteroApi.get('/users', {
+      params: { filter: { email } }
+    });
+    
+    // Check if user exists
+    const userExists = usersResponse.data && usersResponse.data.length > 0;
+    let userData = null;
+    
+    if (userExists) {
+      userData = usersResponse.data[0].attributes;
+    }
+    
+    res.json({ 
+      exists: userExists,
+      user: userData
+    });
+  } catch (error) {
+    console.error('Error checking user:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to check user',
       details: error.response?.data || error.message
     });
   }

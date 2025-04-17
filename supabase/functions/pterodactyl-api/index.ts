@@ -81,6 +81,28 @@ async function getUserDetails(apiKey: string, url: string, userId: number) {
   return await response.json();
 }
 
+// Function to check if a user exists in Pterodactyl by email
+async function checkUserByEmail(apiKey: string, url: string, email: string) {
+  const apiUrl = `${url}/api/application/users?filter[email]=${encodeURIComponent(email)}`;
+  const response = await fetch(apiUrl, {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to check user: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return {
+    exists: data.data && data.data.length > 0,
+    user: data.data && data.data.length > 0 ? data.data[0] : null
+  };
+}
+
 // Function to get server details from Pterodactyl
 async function getServerDetails(apiKey: string, url: string, serverId: string) {
   const apiUrl = `${url}/api/application/servers/${serverId}`;
@@ -119,6 +141,10 @@ serve(async (req) => {
         break;
       case 'create-user':
         result = await createUser(apiKey, url, data);
+        break;
+      case 'check-user-by-email':
+        if (!data.email) throw new Error('Email is required');
+        result = await checkUserByEmail(apiKey, url, data.email);
         break;
       case 'get-user-details':
         if (!data.userId) throw new Error('User ID is required');
