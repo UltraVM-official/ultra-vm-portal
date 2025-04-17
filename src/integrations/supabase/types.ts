@@ -9,7 +9,150 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      pterodactyl_config: {
+        Row: {
+          application_api_key: string
+          created_at: string
+          id: string
+          last_sync: string
+          panel_url: string
+          updated_at: string
+        }
+        Insert: {
+          application_api_key: string
+          created_at?: string
+          id?: string
+          last_sync?: string
+          panel_url: string
+          updated_at?: string
+        }
+        Update: {
+          application_api_key?: string
+          created_at?: string
+          id?: string
+          last_sync?: string
+          panel_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      servers: {
+        Row: {
+          cpu_limit: number | null
+          created_at: string
+          description: string | null
+          disk_limit: number | null
+          id: string
+          identifier: string | null
+          last_sync: string
+          memory_limit: number | null
+          name: string
+          node: string | null
+          pterodactyl_server_id: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cpu_limit?: number | null
+          created_at?: string
+          description?: string | null
+          disk_limit?: number | null
+          id?: string
+          identifier?: string | null
+          last_sync?: string
+          memory_limit?: number | null
+          name: string
+          node?: string | null
+          pterodactyl_server_id: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cpu_limit?: number | null
+          created_at?: string
+          description?: string | null
+          disk_limit?: number | null
+          id?: string
+          identifier?: string | null
+          last_sync?: string
+          memory_limit?: number | null
+          name?: string
+          node?: string | null
+          pterodactyl_server_id?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sync_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string
+          entity_type: string
+          id: string
+          status: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          status: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          is_admin: boolean
+          last_name: string | null
+          last_sync: string
+          pterodactyl_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id: string
+          is_admin?: boolean
+          last_name?: string | null
+          last_sync?: string
+          pterodactyl_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          is_admin?: boolean
+          last_name?: string | null
+          last_sync?: string
+          pterodactyl_id?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

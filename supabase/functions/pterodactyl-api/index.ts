@@ -6,6 +6,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function syncUsers(apiKey: string, url: string) {
+  const apiUrl = `${url}/api/application/users`;
+  const response = await fetch(apiUrl, {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch users: ${response.statusText}`);
+  }
+
+  return await response.json();
+}
+
+async function syncServers(apiKey: string, url: string) {
+  const apiUrl = `${url}/api/application/servers`;
+  const response = await fetch(apiUrl, {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch servers: ${response.statusText}`);
+  }
+
+  return await response.json();
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -14,26 +48,35 @@ serve(async (req) => {
 
   try {
     const { action, apiKey, url, data } = await req.json();
-    const apiUrl = `${url}/api/application/${action}`;
+    let result;
 
-    console.log(`Making request to Pterodactyl API: ${apiUrl}`);
-
-    // Make request to Pterodactyl API
-    const response = await fetch(apiUrl, {
-      method: data ? 'POST' : 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: data ? JSON.stringify(data) : undefined
-    });
-
-    const result = await response.json();
+    switch (action) {
+      case 'sync-users':
+        result = await syncUsers(apiKey, url);
+        break;
+      case 'sync-servers':
+        result = await syncServers(apiKey, url);
+        break;
+      case 'create-user':
+        const createUserUrl = `${url}/api/application/users`;
+        const createUserResponse = await fetch(createUserUrl, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify(data)
+        });
+        result = await createUserResponse.json();
+        break;
+      default:
+        throw new Error(`Unknown action: ${action}`);
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: response.status
+      status: 200
     });
   } catch (error) {
     console.error('Error in Pterodactyl API function:', error);
