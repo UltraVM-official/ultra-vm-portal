@@ -35,15 +35,15 @@ export async function syncUserToPterodactyl(email: string, password: string, fir
     }
     
     // Update the user profile with the Pterodactyl ID
-    const { data: session } = await supabase.auth.getSession();
-    if (session?.user) {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.user) {
       await supabase
         .from('user_profiles')
         .update({
           pterodactyl_id: result.pterodactylId,
           last_sync: new Date().toISOString()
         })
-        .eq('id', session.user.id);
+        .eq('id', data.session.user.id);
     }
     
     return result;
