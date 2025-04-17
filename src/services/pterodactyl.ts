@@ -4,15 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 // Function to sync a new user with Pterodactyl when they register on the website
 export async function syncUserToPterodactyl(email: string, password: string, firstName: string = "", lastName: string = "") {
   try {
-    // Get the API key and panel URL from the config
-    const { data: config, error: configError } = await supabase
-      .from('pterodactyl_config')
-      .select('*')
-      .single();
-    
-    if (configError) {
-      throw new Error('Could not retrieve Pterodactyl configuration');
-    }
+    // Get the API key and panel URL from environment variables
+    const apiKey = process.env.PTERODACTYL_API_KEY || 'ptla_fWEqJbMYXYhPVHSqXvFFCP9OlncLW6GaBfiZDPJdUrI';
+    const panelUrl = process.env.PTERODACTYL_PANEL_URL || 'https://panel.ultravm.xyz';
     
     // Create the user in Pterodactyl
     const response = await fetch('/api/register', {
