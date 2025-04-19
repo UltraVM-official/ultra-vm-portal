@@ -14,6 +14,8 @@ interface UserProfileData {
   pterodactyl_id: number | null;
   is_admin: boolean;
   last_sync: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export function UserProfile() {
@@ -42,7 +44,13 @@ export function UserProfile() {
         throw error;
       }
       
-      setProfile(data as UserProfileData);
+      // Add last_sync field if it doesn't exist
+      const profileData = {
+        ...data,
+        last_sync: data.last_sync || null
+      } as UserProfileData;
+      
+      setProfile(profileData);
     } catch (error) {
       console.error('Error fetching user profile:', error);
       toast({
