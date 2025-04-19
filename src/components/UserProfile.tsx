@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,7 @@ export function UserProfile() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,6 +61,54 @@ export function UserProfile() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConnectToPterodactyl = async () => {
+    if (!profile) return;
+    
+    try {
+      setSyncing(true);
+      toast({
+        title: "Connecting to Pterodactyl",
+        description: "Please wait while we connect your account...",
+      });
+      
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: profile.email,
+          password: "TemporaryPassword" + Math.random().toString(36).substring(2, 10),
+          firstName: profile.first_name,
+          lastName: profile.last_name
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to connect to Pterodactyl');
+      }
+      
+      // Refresh the profile data
+      await fetchUserProfile();
+      
+      toast({
+        title: "Success",
+        description: "Your account has been connected to Pterodactyl.",
+      });
+    } catch (error) {
+      console.error('Error connecting to Pterodactyl:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to connect your account to Pterodactyl.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -137,14 +187,10 @@ export function UserProfile() {
                 {!profile.pterodactyl_id && (
                   <Button 
                     className="mt-4"
-                    onClick={() => {
-                      toast({
-                        title: "Syncing Account",
-                        description: "This function will be available soon.",
-                      });
-                    }}
+                    onClick={handleConnectToPterodactyl}
+                    disabled={syncing}
                   >
-                    Connect to Pterodactyl
+                    {syncing ? 'Connecting...' : 'Connect to Pterodactyl'}
                   </Button>
                 )}
               </div>

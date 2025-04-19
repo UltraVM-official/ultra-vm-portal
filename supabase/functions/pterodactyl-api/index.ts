@@ -129,7 +129,14 @@ serve(async (req) => {
   }
 
   try {
-    const { action, apiKey, url, data } = await req.json();
+    const { action, data } = await req.json();
+    const apiKey = Deno.env.get("PTERODACTYL_API_KEY");
+    const url = Deno.env.get("PTERODACTYL_PANEL_URL");
+    
+    if (!apiKey || !url) {
+      throw new Error("Pterodactyl API configuration is missing");
+    }
+    
     let result;
 
     switch (action) {
@@ -140,18 +147,19 @@ serve(async (req) => {
         result = await syncServers(apiKey, url);
         break;
       case 'create-user':
+        if (!data) throw new Error('User data is required');
         result = await createUser(apiKey, url, data);
         break;
       case 'check-user-by-email':
-        if (!data.email) throw new Error('Email is required');
+        if (!data?.email) throw new Error('Email is required');
         result = await checkUserByEmail(apiKey, url, data.email);
         break;
       case 'get-user-details':
-        if (!data.userId) throw new Error('User ID is required');
+        if (!data?.userId) throw new Error('User ID is required');
         result = await getUserDetails(apiKey, url, data.userId);
         break;
       case 'get-server-details':
-        if (!data.serverId) throw new Error('Server ID is required');
+        if (!data?.serverId) throw new Error('Server ID is required');
         result = await getServerDetails(apiKey, url, data.serverId);
         break;
       default:

@@ -5,40 +5,49 @@ import { supabase } from "@/integrations/supabase/client";
 export async function syncUserToPterodactyl(email: string, password: string, firstName: string = "", lastName: string = "") {
   try {
     // Create the user in Pterodactyl
-    const response = await fetch('/api/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email,
-        password,
-        firstName,
-        lastName
-      })
+    const { data: userData, error: userError } = await supabase.functions.invoke('pterodactyl-api', {
+      body: {
+        action: 'create-user',
+        data: {
+          email,
+          username: email.split('@')[0],
+          first_name: firstName || email.split('@')[0],
+          last_name: lastName || '',
+          password: password,
+          root_admin: false,
+        }
+      }
     });
     
-    const result = await response.json();
+    if (userError) {
+      throw new Error(`Failed to create user in Pterodactyl: ${userError.message}`);
+    }
     
-    if (!response.ok) {
-      throw new Error(result.error || 'Failed to create user in Pterodactyl');
+    const pterodactylId = userData?.attributes?.id;
+    
+    if (!pterodactylId) {
+      throw new Error('Failed to get Pterodactyl ID from response');
     }
     
     // Update the user profile with the Pterodactyl ID
     const { data } = await supabase.auth.getSession();
     if (data?.session?.user) {
-      await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          pterodactyl_id: result.pterodactylId,
+          pterodactyl_id: pterodactylId,
           first_name: firstName,
           last_name: lastName,
           last_sync: new Date().toISOString()
         })
         .eq('id', data.session.user.id);
+        
+      if (updateError) {
+        throw new Error(`Failed to update user profile: ${updateError.message}`);
+      }
     }
     
-    return result;
+    return userData;
   } catch (error) {
     console.error('Error syncing user to Pterodactyl:', error);
     throw error;
@@ -67,20 +76,17 @@ export async function getUserServers() {
 // Function to trigger a full sync from the admin dashboard
 export async function triggerFullSync() {
   try {
-    const response = await fetch('/api/sync', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const { data, error } = await supabase.functions.invoke('pterodactyl-api', {
+      body: {
+        action: 'sync-users'
       }
     });
     
-    const result = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(result.error || 'Failed to trigger synchronization');
+    if (error) {
+      throw new Error(`Failed to trigger synchronization: ${error.message}`);
     }
     
-    return result;
+    return data;
   } catch (error) {
     console.error('Error triggering sync:', error);
     throw error;
@@ -90,15 +96,18 @@ export async function triggerFullSync() {
 // Function to check if a user exists in Pterodactyl by email
 export async function checkPterodactylUser(email: string) {
   try {
-    const response = await fetch('/api/check-user', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email })
+    const { data, error } = await supabase.functions.invoke('pterodactyl-api', {
+      body: {
+        action: 'check-user-by-email',
+        data: { email }
+      }
     });
     
-    return await response.json();
+    if (error) {
+      throw new Error(`Failed to check user: ${error.message}`);
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error checking Pterodactyl user:', error);
     throw error;
