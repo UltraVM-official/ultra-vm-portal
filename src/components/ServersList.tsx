@@ -1,5 +1,6 @@
 
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -11,54 +12,44 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 
 interface Server {
   id: string;
   name: string;
-  identifier: string;
-  status: string;
-  node: string;
-  cpu_limit: number;
-  memory_limit: number;
-  disk_limit: number;
-  created_at: string;
+  identifier: string | null;
+  status: string | null;
+  node: string | null;
+  cpu_limit: number | null;
+  memory_limit: number | null;
+  disk_limit: number | null;
 }
 
 export function ServersList() {
-  const [servers, setServers] = useState<Server[]>([]);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchServers();
-  }, []);
-
-  const fetchServers = async () => {
-    try {
-      setLoading(true);
+  const { data: servers, isLoading } = useQuery({
+    queryKey: ['servers'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("servers")
         .select("*")
         .order("name");
 
       if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load servers. Please try again.",
+          variant: "destructive",
+        });
         throw error;
       }
 
-      setServers(data || []);
-    } catch (error) {
-      console.error("Error fetching servers:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load servers. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      return data as Server[];
     }
-  };
+  });
 
-  const getStatusClass = (status: string) => {
+  const getStatusClass = (status: string | null) => {
     switch (status?.toLowerCase()) {
       case "running":
         return "text-green-600";
@@ -71,26 +62,27 @@ export function ServersList() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-ultravm-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Your Servers</h2>
-        <button
-          onClick={fetchServers}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          disabled={loading}
-        >
-          {loading ? "Loading..." : "Refresh"}
-        </button>
       </div>
 
-      {servers.length === 0 ? (
+      {!servers || servers.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-gray-500">No servers found.</p>
         </div>
       ) : (
         <Table>
-          <TableCaption>A list of your Pterodactyl servers.</TableCaption>
+          <TableCaption>A list of your servers.</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
@@ -122,3 +114,4 @@ export function ServersList() {
     </div>
   );
 }
+

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Function to sync a new user with Pterodactyl when they register on the website
@@ -112,4 +111,17 @@ export async function checkPterodactylUser(email: string) {
     console.error('Error checking Pterodactyl user:', error);
     throw error;
   }
+}
+
+// Update UserProfileData interface to include last_sync
+interface UserProfileData {
+  id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  pterodactyl_id: number | null;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+  last_sync: string;
 }
