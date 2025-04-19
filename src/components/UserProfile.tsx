@@ -33,7 +33,7 @@ export function UserProfile() {
       setLoading(true);
       
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('id', user?.id)
         .single();

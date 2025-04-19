@@ -25,20 +25,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // First set up the auth listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        setLoading(false);
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      setLoading(false);
 
-        if (event === 'SIGNED_OUT') {
-          setIsAdmin(false);
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // Check admin status when signed in
-          checkAdminStatus(currentSession?.user?.id);
-        }
+      if (event === 'SIGNED_OUT') {
+        setIsAdmin(false);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        checkAdminStatus(currentSession?.user?.id);
       }
-    );
+    });
 
     // Then check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
@@ -62,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('is_admin')
         .eq('id', userId)
         .single();

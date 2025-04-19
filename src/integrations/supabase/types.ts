@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          is_admin: boolean
+          last_name: string | null
+          pterodactyl_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id: string
+          is_admin?: boolean
+          last_name?: string | null
+          pterodactyl_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          is_admin?: boolean
+          last_name?: string | null
+          pterodactyl_id?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pterodactyl_config: {
         Row: {
           application_api_key: string
