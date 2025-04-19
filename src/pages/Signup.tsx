@@ -49,7 +49,12 @@ const Signup = () => {
       if (authError) throw authError;
 
       // Create or sync user with Pterodactyl
-      await syncUserToPterodactyl(email, password, firstName, lastName);
+      try {
+        await syncUserToPterodactyl(email, password, firstName, lastName);
+      } catch (syncError) {
+        console.error("Error syncing with Pterodactyl:", syncError);
+        // Continue with signup even if Pterodactyl sync fails
+      }
 
       toast({
         title: "Account created successfully",
