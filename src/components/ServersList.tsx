@@ -12,7 +12,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { Loader2, Power, Cpu, HardDrive, Memory } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 interface Server {
   id: string;
@@ -23,6 +32,14 @@ interface Server {
   cpu_limit: number | null;
   memory_limit: number | null;
   disk_limit: number | null;
+}
+
+interface ServerWithUsage extends Server {
+  usage?: {
+    cpu: number;
+    memory: number;
+    disk: number;
+  }
 }
 
 export function ServersList() {
@@ -45,7 +62,45 @@ export function ServersList() {
         throw error;
       }
 
-      return data as Server[];
+      // Fetch server usage data from Pterodactyl for each server
+      const serversWithUsage: ServerWithUsage[] = await Promise.all(
+        (data as Server[]).map(async (server) => {
+          try {
+            const response = await fetch(`/api/pterodactyl/servers/${server.identifier}/resources`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+
+            if (!response.ok) {
+              console.error(`Failed to fetch usage for server ${server.name}`);
+              return {
+                ...server,
+                usage: { cpu: 0, memory: 0, disk: 0 }
+              };
+            }
+
+            const usageData = await response.json();
+            return {
+              ...server,
+              usage: {
+                cpu: usageData.cpu_absolute ?? 0,
+                memory: (usageData.memory_bytes / (1024 * 1024)) ?? 0, // Convert to MB
+                disk: (usageData.disk_bytes / (1024 * 1024)) ?? 0 // Convert to MB
+              }
+            };
+          } catch (error) {
+            console.error(`Error fetching usage for server ${server.name}:`, error);
+            return {
+              ...server,
+              usage: { cpu: 0, memory: 0, disk: 0 }
+            };
+          }
+        })
+      );
+
+      return serversWithUsage;
     }
   });
 
@@ -72,46 +127,84 @@ export function ServersList() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Your Servers</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {servers?.map((server) => (
+          <Card key={server.id} className="overflow-hidden">
+            <CardHeader className="space-y-1">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl">{server.name}</CardTitle>
+                <span 
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    getStatusClass(server.status)
+                  }`}
+                >
+                  {server.status || "Unknown"}
+                </span>
+              </div>
+              <CardDescription>
+                ID: {server.identifier || "N/A"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center">
+                    <Cpu className="w-4 h-4 mr-2" />
+                    CPU Usage
+                  </span>
+                  <span>{server.usage?.cpu ?? 0}%</span>
+                </div>
+                <Progress value={server.usage?.cpu ?? 0} className="h-2" />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center">
+                    <Memory className="w-4 h-4 mr-2" />
+                    Memory
+                  </span>
+                  <span>
+                    {Math.round(server.usage?.memory ?? 0)} / {server.memory_limit || "∞"} MB
+                  </span>
+                </div>
+                <Progress 
+                  value={server.memory_limit ? (server.usage?.memory ?? 0) / server.memory_limit * 100 : 0} 
+                  className="h-2" 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center">
+                    <HardDrive className="w-4 h-4 mr-2" />
+                    Disk
+                  </span>
+                  <span>
+                    {Math.round(server.usage?.disk ?? 0)} / {server.disk_limit || "∞"} MB
+                  </span>
+                </div>
+                <Progress 
+                  value={server.disk_limit ? (server.usage?.disk ?? 0) / server.disk_limit * 100 : 0} 
+                  className="h-2" 
+                />
+              </div>
+
+              <div className="flex justify-between mt-4">
+                <Button variant="outline" className="w-full">
+                  <Power className="w-4 h-4 mr-2" />
+                  Power
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {!servers || servers.length === 0 ? (
+      {(!servers || servers.length === 0) && (
         <div className="text-center py-8">
           <p className="text-gray-500">No servers found.</p>
         </div>
-      ) : (
-        <Table>
-          <TableCaption>A list of your servers.</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Identifier</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Node</TableHead>
-              <TableHead className="text-right">CPU</TableHead>
-              <TableHead className="text-right">Memory (MB)</TableHead>
-              <TableHead className="text-right">Disk (MB)</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {servers.map((server) => (
-              <TableRow key={server.id}>
-                <TableCell className="font-medium">{server.name}</TableCell>
-                <TableCell>{server.identifier || "N/A"}</TableCell>
-                <TableCell className={getStatusClass(server.status)}>
-                  {server.status || "Unknown"}
-                </TableCell>
-                <TableCell>{server.node || "N/A"}</TableCell>
-                <TableCell className="text-right">{server.cpu_limit || "∞"}</TableCell>
-                <TableCell className="text-right">{server.memory_limit || "∞"}</TableCell>
-                <TableCell className="text-right">{server.disk_limit || "∞"}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
       )}
     </div>
   );
 }
-
