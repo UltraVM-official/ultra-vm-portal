@@ -1,9 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ProfileSkeleton } from './profile/ProfileSkeleton';
+import { PersonalInfo } from './profile/PersonalInfo';
+import { PterodactylInfo } from './profile/PterodactylInfo';
 
 interface UserProfileData {
   id: string;
@@ -33,24 +36,15 @@ export function UserProfile() {
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', user?.id)
         .single();
       
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
-      // Add last_sync field if it doesn't exist
-      const profileData = {
-        ...data,
-        last_sync: data.last_sync || null
-      } as UserProfileData;
-      
-      setProfile(profileData);
+      setProfile(data as UserProfileData);
     } catch (error) {
       console.error('Error fetching user profile:', error);
       toast({
@@ -92,14 +86,13 @@ export function UserProfile() {
         throw new Error(result.error || 'Failed to connect to Pterodactyl');
       }
       
-      // Refresh the profile data
       await fetchUserProfile();
       
       toast({
         title: "Success",
         description: "Your account has been connected to Pterodactyl.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error connecting to Pterodactyl:', error);
       toast({
         title: 'Error',
@@ -112,16 +105,7 @@ export function UserProfile() {
   };
 
   if (loading) {
-    return (
-      <div className="p-6">
-        <div className="animate-pulse flex flex-col">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-        </div>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   return (
@@ -132,68 +116,19 @@ export function UserProfile() {
       <CardContent>
         {profile ? (
           <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium">Personal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                <div>
-                  <p className="text-sm text-gray-500">Name</p>
-                  <p>{profile.first_name} {profile.last_name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p>{profile.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Account Type</p>
-                  <p>{profile.is_admin ? 'Administrator' : 'User'}</p>
-                </div>
-              </div>
-            </div>
+            <PersonalInfo
+              firstName={profile.first_name}
+              lastName={profile.last_name}
+              email={profile.email}
+              isAdmin={profile.is_admin}
+            />
             
-            <div>
-              <h3 className="text-lg font-medium">Pterodactyl Integration</h3>
-              <div className="mt-2">
-                <div className="mb-2">
-                  <p className="text-sm text-gray-500">Status</p>
-                  <div className="flex items-center mt-1">
-                    <span 
-                      className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                        profile.pterodactyl_id ? 'bg-green-500' : 'bg-red-500'
-                      }`}
-                    ></span>
-                    <p>
-                      {profile.pterodactyl_id 
-                        ? 'Connected to Pterodactyl' 
-                        : 'Not connected to Pterodactyl'}
-                    </p>
-                  </div>
-                </div>
-                
-                {profile.pterodactyl_id && (
-                  <div>
-                    <p className="text-sm text-gray-500">Pterodactyl ID</p>
-                    <p>{profile.pterodactyl_id}</p>
-                  </div>
-                )}
-                
-                {profile.last_sync && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">Last Synchronized</p>
-                    <p>{new Date(profile.last_sync).toLocaleString()}</p>
-                  </div>
-                )}
-                
-                {!profile.pterodactyl_id && (
-                  <Button 
-                    className="mt-4"
-                    onClick={handleConnectToPterodactyl}
-                    disabled={syncing}
-                  >
-                    {syncing ? 'Connecting...' : 'Connect to Pterodactyl'}
-                  </Button>
-                )}
-              </div>
-            </div>
+            <PterodactylInfo
+              pterodactylId={profile.pterodactyl_id}
+              lastSync={profile.last_sync}
+              onConnect={handleConnectToPterodactyl}
+              syncing={syncing}
+            />
           </div>
         ) : (
           <p>No profile information available.</p>
