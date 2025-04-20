@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -12,8 +11,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Power, Cpu, HardDisk, Monitor } from "lucide-react";
+import { Loader2, Power, Cpu, HardDrive, Monitor } from "lucide-react";
 import { motion } from "framer-motion";
+import { LoadingScreen } from "./LoadingScreen";
 
 interface Server {
   id: string;
@@ -187,7 +187,7 @@ export function ServersList() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="flex items-center text-purple-100">
-                      <HardDisk className="w-4 h-4 mr-2" />
+                      <HardDrive className="w-4 h-4 mr-2" />
                       Disk
                     </span>
                     <span>
