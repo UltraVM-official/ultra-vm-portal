@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -48,22 +49,25 @@ export function ServersList() {
     error,
     data: servers,
     refetch,
-  } = useQuery("servers", async () => {
-    const { data, error } = await supabase
-      .from("servers")
-      .select("*")
-      .order("name");
+  } = useQuery({
+    queryKey: ["servers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("servers")
+        .select("*")
+        .order("name");
 
-    if (error) {
-      throw error;
+      if (error) {
+        throw error;
+      }
+
+      return data;
     }
-
-    return data;
   });
 
-  const { data: serverResources, refetch: refetchServerResources } = useQuery(
-    "serverResources",
-    async () => {
+  const { data: serverResources, refetch: refetchServerResources } = useQuery({
+    queryKey: ["serverResources"],
+    queryFn: async () => {
       if (!servers) return {};
 
       const resources = {};
@@ -89,10 +93,8 @@ export function ServersList() {
       }
       return resources;
     },
-    {
-      refetchInterval: 60000, // Refetch every 60 seconds
-    }
-  );
+    refetchInterval: 60000, // Refetch every 60 seconds
+  });
 
   React.useEffect(() => {
     refetchServerResources();
@@ -114,7 +116,7 @@ export function ServersList() {
   };
 
   if (isLoading) {
-    return <LoadingScreen message="Loading your servers..." />;
+    return <LoadingScreen />;
   }
 
   if (error) {
