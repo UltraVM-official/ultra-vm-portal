@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -143,8 +142,9 @@ export function ServersList() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
             whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <Card className="overflow-hidden border-purple-800/20 bg-black/40 backdrop-blur-sm hover:bg-black/60 transition-all duration-300">
+            <Card className="overflow-hidden border-purple-800/20 bg-black/40 backdrop-blur-sm hover:bg-black/60 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20">
               <CardHeader className="bg-gradient-to-r from-purple-900/50 to-black pb-2">
                 <CardTitle className="text-lg text-purple-100 font-bold truncate">
                   {server.name}
