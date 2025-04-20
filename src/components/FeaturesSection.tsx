@@ -1,52 +1,39 @@
-
 import { Cpu, Shield, Clock, Server, Zap, Activity, LifeBuoy, Lock } from "lucide-react";
-
-const features = [
-  {
-    name: 'High Performance',
-    description: 'Blazing fast servers with the latest gen CPUs, optimized for maximum performance.',
-    icon: Cpu,
-  },
-  {
-    name: 'DDoS Protection',
-    description: 'Advanced protection against DDoS attacks to keep your services online 24/7.',
-    icon: Shield,
-  },
-  {
-    name: '99.9% Uptime',
-    description: 'We guarantee 99.9% uptime for all our servers, backed by our SLA.',
-    icon: Clock,
-  },
-  {
-    name: 'SSD Storage',
-    description: 'All servers come with high-speed SSD storage for the fastest read/write speeds.',
-    icon: Server,
-  },
-  {
-    name: 'Instant Deployment',
-    description: 'Deploy your new server in seconds, not minutes or hours.',
-    icon: Zap,
-  },
-  {
-    name: 'Real-time Monitoring',
-    description: 'Monitor your server performance and resource usage in real-time.',
-    icon: Activity,
-  },
-  {
-    name: '24/7 Support',
-    description: 'Our team is available 24/7 to help you with any issues or questions.',
-    icon: LifeBuoy,
-  },
-  {
-    name: 'Secure Infrastructure',
-    description: 'Enterprise-grade security to keep your data and applications safe.',
-    icon: Lock,
-  },
-];
-
+const features = [{
+  name: 'High Performance',
+  description: 'Blazing fast servers with the latest gen CPUs, optimized for maximum performance.',
+  icon: Cpu
+}, {
+  name: 'DDoS Protection',
+  description: 'Advanced protection against DDoS attacks to keep your services online 24/7.',
+  icon: Shield
+}, {
+  name: '99.9% Uptime',
+  description: 'We guarantee 99.9% uptime for all our servers, backed by our SLA.',
+  icon: Clock
+}, {
+  name: 'SSD Storage',
+  description: 'All servers come with high-speed SSD storage for the fastest read/write speeds.',
+  icon: Server
+}, {
+  name: 'Instant Deployment',
+  description: 'Deploy your new server in seconds, not minutes or hours.',
+  icon: Zap
+}, {
+  name: 'Real-time Monitoring',
+  description: 'Monitor your server performance and resource usage in real-time.',
+  icon: Activity
+}, {
+  name: '24/7 Support',
+  description: 'Our team is available 24/7 to help you with any issues or questions.',
+  icon: LifeBuoy
+}, {
+  name: 'Secure Infrastructure',
+  description: 'Enterprise-grade security to keep your data and applications safe.',
+  icon: Lock
+}];
 const FeaturesSection = () => {
-  return (
-    <div className="py-24 bg-gray-50 dark:bg-ultravm-dark/50">
+  return <div className="py-24 bg-gray-50 dark:bg-ultravm-dark/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
@@ -59,8 +46,7 @@ const FeaturesSection = () => {
 
         <div className="mt-16">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature) => (
-              <div key={feature.name} className="relative bg-white dark:bg-ultravm-dark rounded-lg border border-gray-200 dark:border-gray-800 p-6 card-shadow hover:border-ultravm-primary transition-colors duration-300">
+            {features.map(feature => <div key={feature.name} className="relative border border-gray-200 dark:border-gray-800 p-6 card-shadow hover:border-ultravm-primary transition-colors duration-300 rounded-lg px-[16px] bg-slate-950 my-[9px]">
                 <div className="flex items-center justify-center h-12 w-12 rounded-md bg-ultravm-primary text-white">
                   <feature.icon className="h-6 w-6" />
                 </div>
@@ -70,13 +56,10 @@ const FeaturesSection = () => {
                     {feature.description}
                   </p>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default FeaturesSection;
